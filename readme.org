@@ -10,7 +10,7 @@ Note: =pack.py= itself must be packed as well. The you can run =./new-packed.py=
 To pack all file in =$target_dir=
 : tar zc --exclude='*.pyc' --exclude='*/.*' -C $target_dir -O | ./pack.py --pack main.py
 
-=import xxx= in packed python file will search =*/*/xxx/__init__.py= , =*/*/xxx.py=, =*/*/xxx.so= in order.
+=import xxx= in packed python file will search =xxx/__init__.py= , =xxx.py=, =xxx.so= in order.
 
 * Run packed script
 : ./new-packed.py # without any arguments, will dump readme.txt in packed file
