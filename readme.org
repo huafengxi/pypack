@@ -1,0 +1,37 @@
+#+Title pack.py
+
+This is a single file script, just copy to where you like.
+
+If you have a =main.py= and =lib.py=, you can use the following command to pack:
+: tar zc main.py lib.py pack.py -O | ./pack.py --pack main.py > new-packed.py
+Note: =pack.py= itself must be packed as well.
+The you can run =./new-packed.py= without any depends.
+
+To pack all file in =$target_dir=
+: tar zc --exclude='*.pyc' --exclude='*/.*' --exclude='*.log' --exclude='*.o' -C $target_dir -O | ./pack.py --pack main.py
+
+* Run packed script
+: ./new-packed.py # without any arguments, will dump readme.txt in packed file
+: ./new-packed.py a.txt # will dump a.txt in packed file
+: ./new-packed.py a.sh  # will execute a.sh in packed file
+: ./new-packed.py a.py  # will execute a.py in packed file
+: ./new-packed.py xxx... # if argv[0] is not a packed file, then execute `main.py xxx...`
+Note: =a.sh= or =a.py= must begin with =#!/= in order to be recognized as executable script.
+
+* Inspect __pack__
+=__pack__= is a global variable you can inspect in python script.
+for example, you can pack =pack-inspect.py= to your =new-packed.py= Then:
+: ./new-packed.py pack-inspect.py # will list all packed files.
+: ./new-packed.py pack-inspect.py a.txt # dump a.txt
+: ./new-packed.py pack-inspect.py abc/  # list file whose path prefixed by 'abc'
+
+* In case you do not like pack into python file
+You can create =new-packed.tar.gz=
+: tar zcf new-packed.tar.gz ...
+
+Then run =pack.py= with =pk= environ variable set to =new-packed.tar.gz=.
+: pk=new-packed.tar.gz ./pack.py ...
+
+* Known issues
+1. =pack.py= must be packed.
+2. executable file not end with '.py' will be interpretd by =bash=
