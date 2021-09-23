@@ -25,7 +25,7 @@ for example, you can pack =pack-inspect.py= to your =new-packed.py= Then:
 : ./new-packed.py pack-inspect.py a.txt # dump a.txt
 : ./new-packed.py pack-inspect.py abc/  # list file whose path prefixed by 'abc'
 
-* In case you do not like pack into python file
+* In case you like =.tar.gz=
 You can create =new-packed.tar.gz=
 : tar zcf new-packed.tar.gz ...
 
