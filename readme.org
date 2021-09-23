@@ -10,6 +10,8 @@ The you can run =./new-packed.py= without any depends.
 To pack all file in =$target_dir=
 : tar zc --exclude='*.pyc' --exclude='*/.*' --exclude='*.log' --exclude='*.o' -C $target_dir -O | ./pack.py --pack main.py
 
+=import xxx= in packed python file will search =*/*/xxx/__init__.py= , =*/*/xxx.py=, =*/*/xxx.so=.
+
 * Run packed script
 : ./new-packed.py # without any arguments, will dump readme.txt in packed file
 : ./new-packed.py a.txt # will dump a.txt in packed file
