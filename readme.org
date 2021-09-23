@@ -2,15 +2,15 @@
 
 This is a single file script, just copy to where you like.
 
-If you have =mylib.py= and =main.py= which =import mylib=,  you can use the following command to pack:
+Suppose There are =mylib.py=, and =main.py= which =import mylib=, 
+you can use the following command to pack them into a single python file:
 : tar zc main.py mylib.py pack.py -O | ./pack.py --pack main.py > new-packed.py
-Note: =pack.py= itself must be packed as well.
-The you can run =./new-packed.py= without depends.
+Note: =pack.py= itself must be packed as well. The you can run =./new-packed.py= without depends.
 
 To pack all file in =$target_dir=
-: tar zc --exclude='*.pyc' --exclude='*/.*' --exclude='*.log' --exclude='*.o' -C $target_dir -O | ./pack.py --pack main.py
+: tar zc --exclude='*.pyc' --exclude='*/.*' -C $target_dir -O | ./pack.py --pack main.py
 
-=import xxx= in packed python file will search =*/*/xxx/__init__.py= , =*/*/xxx.py=, =*/*/xxx.so=.
+=import xxx= in packed python file will search =*/*/xxx/__init__.py= , =*/*/xxx.py=, =*/*/xxx.so= in order.
 
 * Run packed script
 : ./new-packed.py # without any arguments, will dump readme.txt in packed file
