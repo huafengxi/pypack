@@ -1,4 +1,4 @@
-#+Title pack.py
+#+Title: pack.py
 
 This is a single file script, just copy to where you like.
 
