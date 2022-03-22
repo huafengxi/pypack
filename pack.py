@@ -130,17 +130,17 @@ def genpack(pack, entry=None):
     return """#!/usr/bin/env python2
 import base64, zlib
 __pk_src__ = 'X:%s'
-exec(compile(zlib.decompress(base64.b64decode('%s')), "<tar>/pack.py", "exec"))
+exec(compile(zlib.decompress(base64.b64decode(b'%s')), "<tar>/pack.py", "exec"))
 """ % (base64.b64encode(build_tar(pack)).decode('ascii'), base64.b64encode(zlib.compress(pack.read('pack.py'))).decode('utf-8'))
 
 def run(pack): # sys.argv must > 1
     exec(compile(pack.read('pack.spec'), '<tar>/pack.spec', 'exec'), globals(), globals())
-    def is_executable(text): return type(text) == str and text.startswith('#!/')
+    def is_executable(text): return (type(text) == str or type(text) == bytes) and text.startswith(b'#!/')
     main_file = sys.argv.pop(1) if pack.read(sys.argv[1]) != None else __pk_entry__
     src = pack.read(main_file)
     if not src: raise Exception('%s not found!'%(main_file))
     if not is_executable(src):
-        sys.stdout.write(src)
+        sys.stdout.write(src.decode('utf-8'))
     elif main_file.endswith('.py'):
         exec(compile(src, os.path.join('<tar>', main_file), 'exec'), globals(), globals())
     else:
