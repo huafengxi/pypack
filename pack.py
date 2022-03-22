@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 '''
 tar zc *.py -O | ./pack.py --pack entry.py >a-pack.py
 curl -s $r/a.tar.gz | ./pack.py ...
@@ -6,7 +6,6 @@ pk=$r/a.tar.gz ./pack.py ...
 '''
 import sys
 import imp
-import urllib2, base64
 import os, os.path, subprocess
 import re
 import stat
@@ -71,7 +70,7 @@ class Pack(list):
         if not res: raise IOError('not found module in pkg: %s'%(fullname))
         path, content = res
         if path.endswith('.so'):
-            print 'load dynamic: %s'%(path)
+            print('load dynamic: %s'%(path))
             mod = imp.load_dynamic(fullname.rpartition('.')[-1], prepare_tfile(content))
         else:
             mod = imp.new_module(fullname)
@@ -84,24 +83,22 @@ class Pack(list):
         else:
             mod.__package__ = fullname.rpartition('.')[0]
         if path.endswith('.py'):
-            exec compile(content, os.path.join('<tar>', path), 'exec') in mod.__dict__
+            exec(compile(content, os.path.join('<tar>', path), 'exec'), mod.__dict__)
         return mod
 
 def prepare_pack():
     def extract_tar(targz):
         import tarfile
         import gzip
-        from cStringIO import StringIO
-        unzip_content = gzip.GzipFile(fileobj=StringIO(targz)).read()
-        tar = tarfile.TarFile(mode='r', fileobj=gzip.GzipFile(fileobj=StringIO(targz)))
+        from io import BytesIO
+        unzip_content = gzip.GzipFile(fileobj=BytesIO(targz)).read()
+        tar = tarfile.TarFile(mode='r', fileobj=gzip.GzipFile(fileobj=BytesIO(targz)))
         return [(x.name, tar.extractfile(x).read()) for x in tar if x.isreg()]
     def read_file(url):
         if url == 'stdin':
             return sys.stdin.read()
         elif url.startswith('X:'):
             return base64.b64decode(url[2:])
-        elif url.startswith('http:') or url.startswith('https:'):
-            return urllib2.urlopen(url).read()
         elif os.path.isfile(url):
             return file(url).read()
     def get_pk_src():
@@ -116,16 +113,16 @@ def genpack(pack, entry=None):
     def build_tar(kv):
         import tarfile
         import gzip
-        from cStringIO import StringIO
-        targz = StringIO()
+        from io import BytesIO
+        targz = BytesIO()
         gzipfile = gzip.GzipFile(mode='w', fileobj=targz)
         tar = tarfile.TarFile(mode='w', fileobj=gzipfile)
         for k,v in kv:
             tarinfo = tarfile.TarInfo(name=k)
             if v == None:
-                print 'v is None, k=%s'%(k)
+                print('v is None, k=%s'%(k))
             tarinfo.size = len(v)
-            tar.addfile(tarinfo, fileobj=StringIO(v))
+            tar.addfile(tarinfo, fileobj=BytesIO(v))
         tar.close()
         gzipfile.close()
         return targz.getvalue()
@@ -133,11 +130,11 @@ def genpack(pack, entry=None):
     return """#!/usr/bin/env python2
 import base64, zlib
 __pk_src__ = 'X:%s'
-exec compile(zlib.decompress(base64.b64decode('%s')), "<tar>/pack.py", "exec")
+exec(compile(zlib.decompress(base64.b64decode('%s')), "<tar>/pack.py", "exec"))
 """ % (base64.b64encode(build_tar(pack)), base64.b64encode(zlib.compress(pack.read('pack.py'))))
 
 def run(pack): # sys.argv must > 1
-    exec compile(pack.read('pack.spec'), '<tar>/pack.spec', 'exec') in globals(), globals()
+    exec(compile(pack.read('pack.spec'), '<tar>/pack.spec', 'exec'), globals(), globals())
     def is_executable(text): return type(text) == str and text.startswith('#!/')
     main_file = sys.argv.pop(1) if pack.read(sys.argv[1]) != None else __pk_entry__
     src = pack.read(main_file)
@@ -145,7 +142,7 @@ def run(pack): # sys.argv must > 1
     if not is_executable(src):
         sys.stdout.write(src)
     elif main_file.endswith('.py'):
-        exec compile(src, os.path.join('<tar>', main_file), 'exec') in globals(), globals()
+        exec(compile(src, os.path.join('<tar>', main_file), 'exec'), globals(), globals())
     else:
         rfd, wfd = os.pipe()
         if os.fork() > 0:
@@ -158,13 +155,13 @@ def run(pack): # sys.argv must > 1
 
 __pack__ = prepare_pack()
 if not __pack__:
-    print __doc__
+    print(__doc__)
     sys.exit(1)
 
 if len(sys.argv) <= 1:
-    print __pack__.read('readme.txt')
+    print(__pack__.read('readme.txt').decode('utf-8'))
 elif sys.argv[1] == '--pack':
-    print genpack(__pack__, sys.argv[2])
+    print(genpack(__pack__, sys.argv[2]))
 else:
     sys.meta_path.insert(0, __pack__)
     run(__pack__)
