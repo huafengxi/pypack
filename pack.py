@@ -96,11 +96,11 @@ def prepare_pack():
         return [(x.name, tar.extractfile(x).read()) for x in tar if x.isreg()]
     def read_file(url):
         if url == 'stdin':
-            return sys.stdin.read()
+            return sys.stdin.buffer.read()
         elif url.startswith('X:'):
             return base64.b64decode(url[2:])
         elif os.path.isfile(url):
-            return file(url).read()
+            return file(url).buffer.read()
     def get_pk_src():
         def get_from_stdin(): return not sys.stdin.isatty() and 'stdin'
         return globals().get('__pk_src__', '') or os.getenv('pk', '')  or get_from_stdin() or ''
@@ -109,7 +109,7 @@ def prepare_pack():
 
 def genpack(pack, entry=None):
     if not pack.read('pack.py'): pack.append(['pack.py', file(__file__).read()])
-    if entry: pack.append(['pack.spec', '__pk_entry__=%s'%(repr(entry))])
+    if entry: pack.append(['pack.spec', ('__pk_entry__=%s'%(repr(entry))).encode('utf-8')])
     def build_tar(kv):
         import tarfile
         import gzip
@@ -131,7 +131,7 @@ def genpack(pack, entry=None):
 import base64, zlib
 __pk_src__ = 'X:%s'
 exec(compile(zlib.decompress(base64.b64decode('%s')), "<tar>/pack.py", "exec"))
-""" % (base64.b64encode(build_tar(pack)), base64.b64encode(zlib.compress(pack.read('pack.py'))))
+""" % (base64.b64encode(build_tar(pack)).decode('ascii'), base64.b64encode(zlib.compress(pack.read('pack.py'))).decode('utf-8'))
 
 def run(pack): # sys.argv must > 1
     exec(compile(pack.read('pack.spec'), '<tar>/pack.spec', 'exec'), globals(), globals())
