@@ -83,7 +83,7 @@ class Pack(list):
         else:
             mod.__package__ = fullname.rpartition('.')[0]
         if path.endswith('.py'):
-            exec(compile(content, os.path.join('<tar>', path), 'exec'), mod.__dict__)
+            eval(compile(content, os.path.join('<tar>', path), 'exec'), mod.__dict__)
         return mod
 
 def prepare_pack():
@@ -134,7 +134,7 @@ exec(compile(zlib.decompress(base64.b64decode(b'%s')), "<tar>/pack.py", "exec"))
 """ % (base64.b64encode(build_tar(pack)).decode('ascii'), base64.b64encode(zlib.compress(pack.read('pack.py'))).decode('utf-8'))
 
 def run(pack): # sys.argv must > 1
-    exec(compile(pack.read('pack.spec'), '<tar>/pack.spec', 'exec'), globals(), globals())
+    eval(compile(pack.read('pack.spec'), '<tar>/pack.spec', 'exec'), globals(), globals())
     def is_executable(text): return (type(text) == str or type(text) == bytes) and text.startswith(b'#!/')
     main_file = sys.argv.pop(1) if pack.read(sys.argv[1]) != None else __pk_entry__
     src = pack.read(main_file)
@@ -142,7 +142,7 @@ def run(pack): # sys.argv must > 1
     if not is_executable(src):
         sys.stdout.write(src.decode('utf-8'))
     elif main_file.endswith('.py'):
-        exec(compile(src, os.path.join('<tar>', main_file), 'exec'), globals(), globals())
+        eval(compile(src, os.path.join('<tar>', main_file), 'exec'), globals(), globals())
     else:
         rfd, wfd = os.pipe()
         if os.fork() > 0:
