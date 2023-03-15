@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''
 tar zc *.py -O | ./pack.py --pack entry.py >a-pack.py
 curl -s $r/a.tar.gz | ./pack.py ...
