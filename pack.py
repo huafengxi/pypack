@@ -5,7 +5,8 @@ curl -s $r/a.tar.gz | ./pack.py ...
 pk=$r/a.tar.gz ./pack.py ...
 '''
 import sys
-import imp
+import importlib.util
+import importlib.machinery
 import os, os.path, subprocess
 import re
 import stat
@@ -24,6 +25,11 @@ def prepare_tfile(content):
         return fd_path(os.open(fd_path(fd), os.O_RDONLY))
     finally:
         os.close(fd)
+def load_extension_module(module_name, file_path):
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 class Pack(list):
     def __init__(self, data):
@@ -71,9 +77,10 @@ class Pack(list):
         path, content = res
         if path.endswith('.so'):
             print('load dynamic: %s'%(path))
-            mod = imp.load_dynamic(fullname.rpartition('.')[-1], prepare_tfile(content))
+            mod = load_extension_module(fullname.rpartition('.')[-1], prepare_tfile(content))
         else:
-            mod = imp.new_module(fullname)
+            spec = importlib.machinery.ModuleSpec(fullname, loader=None, origin="<dynamic>")
+            mod = importlib.util.module_from_spec(spec)
         mod = sys.modules.setdefault(fullname, mod)
         mod.__file__ = path
         mod.__loader__ = self
@@ -127,7 +134,7 @@ def genpack(pack, entry=None):
         gzipfile.close()
         return targz.getvalue()
     import base64, zlib
-    return """#!/usr/bin/env python2
+    return """#!/usr/bin/env python
 import base64, zlib
 __pk_src__ = 'X:%s'
 exec(compile(zlib.decompress(base64.b64decode(b'%s')), "<tar>/pack.py", "exec"))
@@ -152,7 +159,6 @@ def run(pack): # sys.argv must > 1
             os.close(rfd)
             os.write(wfd, src)
             os.close(wfd)
-
 __pack__ = prepare_pack()
 if not __pack__:
     print(__doc__)
