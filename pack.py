@@ -124,7 +124,7 @@ def genpack(pack, entry=None):
         gzipfile.close()
         return targz.getvalue()
     import base64, zlib
-    return """#!/usr/bin/env python
+    return """#!/usr/bin/env python3
 import base64, zlib
 __pk_src__ = 'X:%s'
 exec(compile(zlib.decompress(base64.b64decode(b'%s')), "<tar>/pack.py", "exec"))
