@@ -5,8 +5,6 @@ curl -s $r/a.tar.gz | ./pack.py ...
 pk=$r/a.tar.gz ./pack.py ...
 '''
 import sys
-import importlib.util
-import importlib.machinery
 import os, os.path, subprocess
 import re
 import stat
@@ -25,13 +23,11 @@ def prepare_tfile(content):
         return fd_path(os.open(fd_path(fd), os.O_RDONLY))
     finally:
         os.close(fd)
-def load_extension_module(module_name, file_path):
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
-class Pack(list):
+import importlib.abc
+import importlib.util
+import importlib.machinery
+class Pack(importlib.abc.MetaPathFinder, importlib.abc.Loader, list):
     def __init__(self, data):
         def remove_first_part(p):
             idx = p.find('/', 1)
@@ -67,23 +63,17 @@ class Pack(list):
     def locate_module(self, fullname):
         path = fullname.replace('.', '/')
         return self.find_file(path + '/__init__.py') or self.find_file(path + '.py') or self.find_file(path + '.so')
-    def find_module(self, fullname, path):
-        if self.locate_module(fullname): return self
-    def load_module(self, fullname):
-        if fullname in sys.modules:
-            return sys.modules[fullname]
+    def find_spec(self, fullname, path, target=None): # MetaPathFinder
+        if self.locate_module(fullname):
+            return importlib.machinery.ModuleSpec(fullname, self)
+    def create_module(self, spec): # Loader
+        return None # Use default module creation
+    def exec_module(self, mod):
+        fullname = mod.__name__
         res = self.locate_module(fullname)
         if not res: raise IOError('not found module in pkg: %s'%(fullname))
         path, content = res
-        if path.endswith('.so'):
-            print('load dynamic: %s'%(path))
-            mod = load_extension_module(fullname.rpartition('.')[-1], prepare_tfile(content))
-        else:
-            spec = importlib.machinery.ModuleSpec(fullname, loader=None, origin="<dynamic>")
-            mod = importlib.util.module_from_spec(spec)
-        mod = sys.modules.setdefault(fullname, mod)
         mod.__file__ = path
-        mod.__loader__ = self
         if path.endswith('__init__.py'): # is package
             mod.__path__ = []
             mod.__package__ = fullname
